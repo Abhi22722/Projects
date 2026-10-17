@@ -3,6 +3,7 @@ import gridfs
 from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from pymongo import MongoClient
@@ -15,14 +16,18 @@ load_dotenv()
 # PostgreSQL Connection
 DATABASE_URL = os.getenv("DB_URL")
 
+
+mongo_uri = os.getenv("MONGO_URI")
+mongo_db = os.getenv("MONGO_DB")
 # MongoDB Connection
-MONGO_URI = "mongodb://localhost:27017"
-client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
-db = client["MajorProject"]
+
+client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+db = client[mongo_db]
 fs = gridfs.GridFS(db)  # Initialize GridFS for video storage
 
 # Initialize FastAPI
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Set up templates for rendering HTML pages
 templates = Jinja2Templates(directory="templates")
@@ -41,7 +46,7 @@ async def serve_dashboard(request: Request):
     return templates.TemplateResponse("dashboard.html", {"request": request})
 
 # -------------------------------
-# ✅ Handle Login (Fixed Redirect)
+# ✅ Handle Login 
 # -------------------------------
 from fastapi.responses import RedirectResponse
 

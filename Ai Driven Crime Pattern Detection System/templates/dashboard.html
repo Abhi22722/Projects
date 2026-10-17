@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crime Pattern Detection</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <style>
         :root {
             --primary-color: #000080; /* Navy Blue */
@@ -275,7 +276,7 @@
         <div class="auth-links">
             <a id="loginLink">Login</a>
         </div>
-        <h1>Real Time AI Driven Crime Pattern Detection</h1>
+        <h1>AI Driven Crime Pattern Detection</h1>
         <p>Enhance your security by strengthening home safety against crimes.</p>
     </header>
 
@@ -294,8 +295,8 @@
         <h2>Key Features</h2>
         <div class="features-grid">
             <div class="feature-card">
-                <h3>Video Surveillance with Smart Object Tracking</h3>
-                <p>Enhancing situational awareness through live video analysis with intelligent bounding box visualizations.</p>
+                <h3>Instant Alert System</h3>
+                <p>Sends real-time SMS alerts to authorized person when a crime is detected..</p>
             </div>
             <div class="feature-card">
                 <h3>Secured Access And Interactive Crime Data </h3>
@@ -310,8 +311,8 @@
                 <p>Leveraging cutting-edge AI to instantly classify and assess suspicious activities.</p>
             </div>
             <div class="feature-card">
-                <h3>Real-Time Threat Detection And Object Classification</h3>
-                <p>Empowering immediate identification of suspicious things and persons in dynamic video feeds.</p>
+                <h3>Data Privacy And Security</h3>
+                <p>Secure login with hashed passwords and restricted database access to ensure protected video content and user data privacy.</p>
             </div>
             <div class="feature-card">
                 <h3>Optimized Crime Footage Storage And Retrieval</h3>
@@ -377,7 +378,7 @@
                     localStorage.setItem('loggedInUser', data.user_id); // Store user ID
                     checkAuthStatus();
                     closeModal('loginModal');
-                    alert('Login successful! Redirecting to videos...');
+                    alert('Login successful!');
                     
                     // ✅ Ensuring redirect works by using `setTimeout`
                     setTimeout(() => {
@@ -412,6 +413,6 @@
         }
         </script>
         
-    
+   
 </body>
 </html>

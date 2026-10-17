@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, File, UploadFile, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from twilio.rest import Client
 import time
 
@@ -25,10 +26,15 @@ genai.configure(api_key=API_KEY)
 
 # Initialize FastAPI
 app = FastAPI()
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+mongo_uri = os.getenv("MONGO_URI")
+mongo_db = os.getenv("MONGO_DB")
 
 # Setup MongoDB connection
-client = pymongo.MongoClient("mongodb://localhost:27017/")
-db = client["MajorProject"]
+client = pymongo.MongoClient(mongo_uri)
+db = client[mongo_db]
 fs = gridfs.GridFS(db)
 
 # Setup Templates
@@ -80,7 +86,7 @@ def detect_crime_type(video_path):
     if not key_frames:
         return "No Crime Detected"
 
-    model = genai.GenerativeModel("gemini-1.5-pro")
+    model = genai.GenerativeModel("gemini-2.0-flash")
     images_data = encode_images(key_frames)
 
     prompt_text = """
@@ -107,7 +113,6 @@ def send_alert(crime_type, video_id):
         from_=TWILIO_PHONE_NUMBER,
         to=USER_PHONE_NUMBER
     )
-
 
 # Route: Serve HTML Template
 @app.get("/")
@@ -138,21 +143,22 @@ async def upload_video(file: UploadFile = File(...)):
 
         return JSONResponse(content={"message": "Crime detected! Video stored.", "crime_type": crime_type, "video_id": str(video_id)})
 
-    return JSONResponse(content={"message": "No crime detected, video not stored.", "crime_type": crime_type})
+    return JSONResponse(content={"message": "No crime detected ", "crime_type":"Normal Activity"})
 
 
-# Route: Real-Time Detection with Camera Preview
 @app.get("/detect-real-time/")
 async def detect_real_time():
-    video_path = "uploads/realtime_capture.avi"
+    video_filename = "realtime_capture.mp4"
+    video_path = f"uploads/{video_filename}"
     os.makedirs("uploads", exist_ok=True)
 
-    cap = cv2.VideoCapture(0)  # Open webcam
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    # Record 10-second video from webcam
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    fourcc = cv2.VideoWriter_fourcc(*'mpv4')
     out = cv2.VideoWriter(video_path, fourcc, 10.0, (640, 480))
 
     start_time = time.time()
-    while time.time() - start_time < 10:  # Record for 10 seconds
+    while time.time() - start_time < 10:
         ret, frame = cap.read()
         if not ret:
             break
@@ -164,14 +170,26 @@ async def detect_real_time():
     # Detect crime
     crime_type = detect_crime_type(video_path)
 
-    # If crime detected, store video & alert
+    # If crime is detected
     if crime_type.lower() != "no crime":
         with open(video_path, "rb") as video_file:
-            video_id = fs.put(video_file, filename="realtime_capture.avi")
-        send_alert(crime_type, video_id)
-        return JSONResponse(content={"message": "Crime detected in real-time!", "crime_type": crime_type, "video_id": str(video_id)})
+            video_id = fs.put(video_file, filename=video_filename)
 
-    return JSONResponse(content={"message": "No crime detected in real-time.", "crime_type": crime_type})
+        # Send alert
+        send_alert(crime_type, video_id)
+
+        return JSONResponse(content={
+            "message": "🚨 Crime detected in real-time footage!",
+            "crime_type": crime_type,
+            "video_path": f"/uploads/{video_filename}"
+        })
+
+    # No crime case
+    return JSONResponse(content={
+        "message": " No crime detected in real-time footage.",
+        "crime_type": "Normal Activity",
+        "video_path": f"/uploads/{video_filename}"
+    })
 
 
 # Route: Stream Camera Preview
